@@ -41,7 +41,7 @@ class TInt:
 class TVar:
     def __init__(self, name = None, val=None):
         self.name = name if name is not None else str(val)
-        assert(type(val) in [TInt, TDigit, TBool, TLanguageError])
+        assert(type(val) in [TInt, TDigit, TLanguageError])
         self.val = val
 
     def __repr__(self):

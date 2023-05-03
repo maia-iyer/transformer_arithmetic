@@ -2,18 +2,6 @@ from primitive_types import *
 
 # defining some primitive ops
 
-class TDiv10(TBaseFunction):
-    def __init__(self):
-        super(TCons, self).__init__("TCons")
-
-    def compute(self, x : TVar, output_name = "ANSWER"):
-        assert(isinstance(x.val, TInt))
-        trace = f"{output_name} = {x} // 10"
-        answer = TInt(int(x.compute()) // 10)
-        answer, t = TSetVar().compute(output_name, answer)
-        trace += t
-        return answer, trace
-
 # simple_add : digit x digit -> list(digit)
 class TSimpleAdd(TBaseFunction):
     def __init__(self):
@@ -28,9 +16,9 @@ class TSimpleAdd(TBaseFunction):
         trace += t
         return answer, trace
 
-class TIndex(TBaseFunction):
+class TRIndex(TBaseFunction):
     def __init__(self):
-        super(TIndex, self).__init__("Index")
+        super(TRIndex, self).__init__("RIndex")
 
     def compute(self, x : TVar, y : TVar, output_name = "ANSWER"):
         assert(isinstance(x, TVar) and isinstance(x.val, TInt))
@@ -47,6 +35,27 @@ class TIndex(TBaseFunction):
         answer, t = TSetVar().compute(output_name, answer)
         trace += t
         return answer, trace
+
+"""class TLIndex(TBaseFunction):
+    def __init__(self):
+        super(TLIndex, self).__init__("LIndex")
+
+    def compute(self, x : TVar, y : TVar, output_name = "ANSWER"):
+        assert(isinstance(x, TVar) and isinstance(x.val, TInt))
+        assert(isinstance(y, TVar) and isinstance(y.val, TInt))
+        assert(x.val is not None and y.val is not None)
+        trace = f"{output_name} = {x} [ {y} ]\n"
+        x = x.val
+        y = y.val
+        len_x = len(x.val)
+        if int(y.val) > len_x - 1: answer = TDigit(0)
+        else: 
+            index = len_x - int(y.val) - 1
+            answer = TDigit(x.val[index])
+        answer, t = TSetVar().compute(output_name, answer)
+        trace += t
+        return answer, trace"""
+
 
 class TConcat(TBaseFunction):
     def __init__(self):
@@ -85,20 +94,20 @@ class TAddition(TCompFunction):
         for i in range(max_len):
             index, t = TSetVar().compute('i', TInt(i))
             trace += t
-            digit_one, t = TIndex().compute(x, index, "digit_one")
+            digit_one, t = TRIndex().compute(x, index, "digit_one")
             trace += t
-            digit_two, t = TIndex().compute(y, index, "digit_two")
+            digit_two, t = TRIndex().compute(y, index, "digit_two")
             trace += t
 
             digit_res, t = TSimpleAdd().compute(digit_one, digit_two, "digit_res")
             trace += t
 
-            cur_digit, t = TIndex().compute(digit_res, TVar(val=TInt(0)), "cur_digit")
+            cur_digit, t = TRIndex().compute(digit_res, TVar(val=TInt(0)), "cur_digit")
             trace += t
             cur_digit, t = TSimpleAdd().compute(cur_digit, carry, "cur_digit")
             trace += t
 
-            carry, t = TIndex().compute(digit_res, TVar(val=TInt(1)), "carry")
+            carry, t = TRIndex().compute(digit_res, TVar(val=TInt(1)), "carry")
             trace += t
             res, t = TConcat().compute(cur_digit, res, "res")
             trace += t
@@ -110,3 +119,35 @@ class TAddition(TCompFunction):
         trace += t
             
         return res, trace
+
+class TAddition1(TCompFunction):
+    def __init__(self):
+        super(TAddition1, self).__init__("TAddition1")
+
+    def compute(self, x : TVar, y : TVar, output_name = "ANSWER"):
+        assert(isinstance(x.val, TInt) and isinstance(y.val, TInt))
+        max_len = max(len(x.val.val), len(y.val.val))
+
+        res, t = TSetVar().compute("res", TInt(''))
+        carry, t = TSetVar().compute("carry", TDigit(0))
+
+        for i in range(max_len):
+            index, t = TSetVar().compute('i', TInt(i))
+            digit_one, t = TRIndex().compute(x, index, "digit_one")
+            digit_two, t = TRIndex().compute(y, index, "digit_two")
+
+            digit_res, t = TSimpleAdd().compute(digit_one, digit_two, "digit_res")
+
+            cur_digit, t = TRIndex().compute(digit_res, TVar(val=TInt(0)), "cur_digit")
+            cur_digit, t = TSimpleAdd().compute(cur_digit, carry, "cur_digit")
+
+            carry, t = TRIndex().compute(digit_res, TVar(val=TInt(1)), "carry")
+            res, t = TConcat().compute(cur_digit, res, "res")
+
+        res, t = TConcat().compute(carry, res, "res")
+
+        res, t = TSetVar().compute(output_name, res.val)
+            
+        return res, trace
+
+
